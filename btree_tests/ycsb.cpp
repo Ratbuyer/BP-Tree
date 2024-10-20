@@ -104,7 +104,7 @@ void ycsb_load_run_string(int index_type, int wl, int kt, int ap, int num_thread
         std::vector<int> &ranges,
         std::vector<int> &ops)
 {
-    
+
 }
 
 
@@ -122,9 +122,7 @@ void* threadFunction(void* arg) {
 }
 
 
-template <typename F> inline void parallel_for(size_t start, size_t end, F f) {
-
-    const int numThreads = 48;
+template <typename F> inline void parallel_for(int numThreads, size_t start, size_t end, F f) {
     pthread_t threads[numThreads];
     ThreadArgs threadArgs[numThreads];
     int per_thread = (end - start)/numThreads;
@@ -194,52 +192,83 @@ void ycsb_load_run_randint(int index_type, int wl, int kt, int ap, int num_threa
     std::string init_file;
     std::string txn_file;
 
-    if (ap == UNIFORM) {
-        if (kt == RANDINT_KEY && wl == WORKLOAD_A) {
-            init_file = "../ycsb_inputs/uniform/loada_unif_int.dat";
-            txn_file = "../ycsb_inputs/uniform/txnsa_unif_int.dat";
-        } else if (kt == RANDINT_KEY && wl == WORKLOAD_B) {
-            init_file = "../ycsb_inputs/uniform/loadb_unif_int.dat";
-            txn_file = "../ycsb_inputs/uniform/txnsb_unif_int.dat";
-        } else if (kt == RANDINT_KEY && wl == WORKLOAD_C) {
-            init_file = "../ycsb_inputs/uniform/loadc_unif_int.dat";
-            txn_file = "../ycsb_inputs/uniform/txnsc_unif_int.dat";
-        } else if (kt == RANDINT_KEY && wl == WORKLOAD_D) {
-            init_file = "../ycsb_inputs/uniform/loadd_unif_int.dat";
-            txn_file = "../ycsb_inputs/uniform/txnsd_unif_int.dat";
-        } else if (kt == RANDINT_KEY && wl == WORKLOAD_E) {
-            init_file = "../ycsb_inputs/uniform/loade_unif_int.dat";
-            txn_file = "../ycsb_inputs/uniform/txnse_unif_int.dat";
-        } else if (kt == RANDINT_KEY && wl == WORKLOAD_X) {
-            init_file = "../ycsb_inputs/uniform/loadx_unif_int.dat";
-            txn_file = "../ycsb_inputs/uniform/txnsx_unif_int.dat";
-        } else if (kt == RANDINT_KEY && wl == WORKLOAD_Y) {
-            init_file = "../ycsb_inputs/uniform/loady_unif_int.dat";
-            txn_file = "../ycsb_inputs/uniform/txnsy_unif_int.dat";
-        }
-    } else {
-        if (kt == RANDINT_KEY && wl == WORKLOAD_A) {
-            init_file = "../ycsb_inputs/zipfian/loada_unif_int.dat";
-            txn_file = "../ycsb_inputs/zipfian/txnsa_unif_int.dat";
-        } else if (kt == RANDINT_KEY && wl == WORKLOAD_B) {
-            init_file = "../ycsb_inputs/zipfian/loadb_unif_int.dat";
-            txn_file = "../ycsb_inputs/zipfian/txnsb_unif_int.dat";
-        } else if (kt == RANDINT_KEY && wl == WORKLOAD_C) {
-            init_file = "../ycsb_inputs/zipfian/loadc_unif_int.dat";
-            txn_file = "../ycsb_inputs/zipfian/txnsc_unif_int.dat";
-        } else if (kt == RANDINT_KEY && wl == WORKLOAD_D) {
-            init_file = "../ycsb_inputs/zipfian/loadd_unif_int.dat";
-            txn_file = "../ycsb_inputs/zipfian/txnsd_unif_int.dat";
-        } else if (kt == RANDINT_KEY && wl == WORKLOAD_E) {
-            init_file = "../ycsb_inputs/zipfian/loade_unif_int.dat";
-            txn_file = "../ycsb_inputs/zipfian/txnse_unif_int.dat";
-        } else if (kt == RANDINT_KEY && wl == WORKLOAD_X) {
-            init_file = "../ycsb_inputs/zipfian/loadx_unif_int.dat";
-            txn_file = "../ycsb_inputs/zipfian/txnsx_unif_int.dat";
-        } else if (kt == RANDINT_KEY && wl == WORKLOAD_Y) {
-            init_file = "../ycsb_inputs/zipfian/loadx_unif_int.dat";
-            txn_file = "../ycsb_inputs/zipfian/txnsy_unif_int.dat";
-        }
+    std::string ycsb_dir = "/home/eddy/zipfian";
+
+    if (ap == UNIFORM)
+    {
+      if (kt == RANDINT_KEY && wl == WORKLOAD_A)
+      {
+        init_file = ycsb_dir + "/loada_unif_int.dat";
+        txn_file = ycsb_dir + "/txnsa_unif_int.dat";
+      }
+      else if (kt == RANDINT_KEY && wl == WORKLOAD_B)
+      {
+        init_file = ycsb_dir + "/loadb_unif_int.dat";
+        txn_file = ycsb_dir + "/txnsb_unif_int.dat";
+      }
+      else if (kt == RANDINT_KEY && wl == WORKLOAD_C)
+      {
+        init_file = ycsb_dir + "/loadc_unif_int.dat";
+        txn_file = ycsb_dir + "/txnsc_unif_int.dat";
+      }
+      else if (kt == RANDINT_KEY && wl == WORKLOAD_D)
+      {
+        init_file = ycsb_dir + "/loadd_unif_int.dat";
+        txn_file = ycsb_dir + "/txnsd_unif_int.dat";
+      }
+      else if (kt == RANDINT_KEY && wl == WORKLOAD_E)
+      {
+        init_file = ycsb_dir + "/loade_unif_int.dat";
+        txn_file = ycsb_dir + "/txnse_unif_int.dat";
+      }
+      else if (kt == RANDINT_KEY && wl == WORKLOAD_X)
+      {
+        init_file = ycsb_dir + "/loadx_unif_int.dat";
+        txn_file = ycsb_dir + "/txnsx_unif_int.dat";
+      }
+      else if (kt == RANDINT_KEY && wl == WORKLOAD_Y)
+      {
+        init_file = ycsb_dir + "/loady_unif_int.dat";
+        txn_file = ycsb_dir + "/txnsy_unif_int.dat";
+      }
+    }
+    else
+    {
+      if (kt == RANDINT_KEY && wl == WORKLOAD_A)
+      {
+        init_file = ycsb_dir + "/loada_unif_int.dat";
+        txn_file = ycsb_dir + "/txnsa_unif_int.dat";
+      }
+      else if (kt == RANDINT_KEY && wl == WORKLOAD_B)
+      {
+        init_file = ycsb_dir + "/loadb_unif_int.dat";
+        txn_file = ycsb_dir + "/txnsb_unif_int.dat";
+      }
+      else if (kt == RANDINT_KEY && wl == WORKLOAD_C)
+      {
+        init_file = ycsb_dir + "/loadc_unif_int.dat";
+        txn_file = ycsb_dir + "/txnsc_unif_int.dat";
+      }
+      else if (kt == RANDINT_KEY && wl == WORKLOAD_D)
+      {
+        init_file = ycsb_dir + "/loadd_unif_int.dat";
+        txn_file = ycsb_dir + "/txnsd_unif_int.dat";
+      }
+      else if (kt == RANDINT_KEY && wl == WORKLOAD_E)
+      {
+        init_file = ycsb_dir + "/loade_unif_int.dat";
+        txn_file = ycsb_dir + "/txnse_unif_int.dat";
+      }
+      else if (kt == RANDINT_KEY && wl == WORKLOAD_X)
+      {
+        init_file = ycsb_dir + "/loadx_unif_int.dat";
+        txn_file = ycsb_dir + "/txnsx_unif_int.dat";
+      }
+      else if (kt == RANDINT_KEY && wl == WORKLOAD_Y)
+      {
+        init_file = ycsb_dir + "/loady_unif_int.dat";
+        txn_file = ycsb_dir + "/txnsy_unif_int.dat";
+      }
     }
 
     std::ifstream infile_load(init_file);
@@ -329,7 +358,7 @@ void ycsb_load_run_randint(int index_type, int wl, int kt, int ap, int num_threa
             {
                 // Load
                 auto starttime = get_usecs(); // std::chrono::system_clock::now();
-                parallel_for(0, LOAD_SIZE, [&](const uint64_t &i) {
+                parallel_for(num_thread, 0, LOAD_SIZE, [&](const uint64_t &i) {
                     concurrent_map.insert({init_keys[i], init_keys[i]});
                 });
                 auto end = get_usecs();
@@ -342,7 +371,7 @@ void ycsb_load_run_randint(int index_type, int wl, int kt, int ap, int num_threa
         {
             // Run
             auto starttime = std::chrono::system_clock::now();
-            parallel_for(0, RUN_SIZE, [&](const uint64_t &i) {
+            parallel_for(num_thread, 0, RUN_SIZE, [&](const uint64_t &i) {
                     if (ops[i] == OP_INSERT) {
                         // printf("insert key %lu\n", keys[i]);
                         concurrent_map.insert({keys[i], keys[i]});
