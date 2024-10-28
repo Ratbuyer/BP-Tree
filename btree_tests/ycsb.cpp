@@ -370,6 +370,7 @@ void ycsb_load_run_randint(int index_type, int wl, int kt, int ap, int num_threa
             }
         {
             // Run
+            concurrent_map.clear_counters();
             auto starttime = std::chrono::system_clock::now();
             parallel_for(num_thread, 0, RUN_SIZE, [&](const uint64_t &i) {
                     if (ops[i] == OP_INSERT) {

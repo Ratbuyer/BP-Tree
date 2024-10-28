@@ -33,6 +33,8 @@
 
 #define PSUM_HEIGHT_CUTOFF 2
 
+#define STATS 1
+
 namespace tlx {
 
 //! \addtogroup tlx_container
@@ -237,6 +239,11 @@ public:
     static const bool debug = traits::debug;
 
     //! \}
+
+    #if STATS
+    std::atomic<int> insert_start_count = 0;
+    std::atomic<int> insert_descend_count = 0;
+    #endif
 
 private:
     //! \name Node Classes for In-Memory Nodes
@@ -1193,6 +1200,12 @@ public:
 
     //! Frees up all used B+ tree memory pages
     ~BTree() {
+        #if STATS
+        int insert_start_stat = this->insert_start_count.load();
+        int insert_descend = this->insert_descend_count.load();
+        printf("insert_start_count: %d\n", insert_start_stat);
+        printf("insert_descend_count: %d\n", insert_descend);
+        #endif
         clear();
     }
 
@@ -1658,7 +1671,7 @@ public:
             leaf->mutex_.read_lock(cpuid);
             parent_lock->read_unlock(cpuid);
         }
-        
+
         unsigned short start_slot;
         unsigned short end_slot;
 
@@ -1667,7 +1680,7 @@ public:
             start_slot = find_lower(leaf, start);
             // get first key greator or equal to end, if == n, get next leaf
             end_slot = find_lower(leaf, end);
-            
+
             for (int i = start_slot; i < end_slot; i++) {
                 std::apply(f, std::forward_as_tuple(leaf->slotdata[i]));
             }
@@ -1731,7 +1744,7 @@ public:
             leaf->mutex_.read_lock(cpuid);
             parent_lock->read_unlock(cpuid);
         }
-        
+
         unsigned short start_slot;
 
         uint64_t count = 0;
@@ -1836,7 +1849,7 @@ public:
         else
         {
             const InnerNode* innernode = static_cast<const InnerNode*>(n);
-		if (n->level > PSUM_HEIGHT_CUTOFF) {	
+		if (n->level > PSUM_HEIGHT_CUTOFF) {
       // parallel_for(0, innernode->slotuse + 1, [&](const unsigned short &slot) {
 		  for (unsigned short slot = 0; slot < innernode->slotuse + 1; ++slot)
 			{
@@ -1850,7 +1863,7 @@ public:
 		}
         }
     }
- 
+
     //! Tries to locate a key in the B+ tree and returns an iterator to the
     //! key/data slot if found. If unsuccessful it returns end().
     iterator find(const key_type& key) {
@@ -2227,6 +2240,7 @@ private:
                 if constexpr (optimism) {
                     // printf("unlocking the main lock in shared mode\n");
                     mutex.read_unlock(cpu_id);
+                    this->insert_start_count++;
                     return insert_start<false>(key, value, cpu_id);
                 }
             }
@@ -2244,6 +2258,7 @@ private:
                 if (std::get<2>(r)) {
                     // printf("unlocking the main lock in shared mode\n");
                     // mutex.read_unlock();
+                    this->insert_start_count++;
                     return insert_start<false>(key, value, cpu_id);
                 }
             }
@@ -2333,6 +2348,7 @@ private:
               if (lock_p) {
                 if (inner->level == 1 && std::get<2>(r) && !inner->is_full()) {
                   if (lock_p->try_upgrade_release_on_fail(cpu_id)) {
+                    this->insert_descend_count++;
                     r = insert_descend<false>(inner->childid[slot], key, value,
                                               &newkey, &newchild, &lock_p,
                                               cpu_id);
@@ -2914,7 +2930,7 @@ private:
                                node* curr,
                                node* left, node* right,
                                InnerNode* left_parent, InnerNode* right_parent,
-                               InnerNode* parent, unsigned int parentslot, ReaderWriterLock ** parent_lock, 
+                               InnerNode* parent, unsigned int parentslot, ReaderWriterLock ** parent_lock,
 int cpu_id) {
         if (curr->is_leafnode())
         {
@@ -2938,7 +2954,7 @@ int cpu_id) {
                 return {btree_not_found, false};
             }
 
-            // in this case the parent needs to do something 
+            // in this case the parent needs to do something
             // so in optimism mode we just fail back to the top
             if constexpr (concurrent && optimism) {
                 if (slot == leaf->slotuse) {
@@ -3141,7 +3157,7 @@ int cpu_id) {
                             lock_p->read_unlock(cpu_id);
                         }
                     }
-                } 
+                }
                 return {result, false};
             }
 
@@ -3219,7 +3235,7 @@ int cpu_id) {
                                 lock_p->read_unlock(cpu_id);
                             }
                         }
-                    } 
+                    }
                     return {btree_ok, false};
                 }
                 // case : if both left and right leaves would underflow in case
@@ -3288,7 +3304,7 @@ int cpu_id) {
                         lock_p->read_unlock(cpu_id);
                     }
                 }
-            } 
+            }
             return {myres, false};
         }
     }
