@@ -206,6 +206,10 @@ public:
         std::swap(tree_, from.tree_);
     }
 
+    void clear_stats() {
+        this->tree_.clear_stats();
+    }
+
     //! \}
 
 public:

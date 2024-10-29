@@ -33,7 +33,7 @@
 
 #define PSUM_HEIGHT_CUTOFF 2
 
-#define STATS 1
+#define STATS 0
 
 namespace tlx {
 
@@ -244,6 +244,13 @@ public:
     std::atomic<int> insert_start_count = 0;
     std::atomic<int> insert_descend_count = 0;
     #endif
+
+    void clear_stats() {
+        #if STATS
+        this->insert_start_count = 0;
+        this->insert_descend_count = 0;
+        #endif
+    }
 
 private:
     //! \name Node Classes for In-Memory Nodes
@@ -2240,7 +2247,9 @@ private:
                 if constexpr (optimism) {
                     // printf("unlocking the main lock in shared mode\n");
                     mutex.read_unlock(cpu_id);
-                    this->insert_start_count++;
+                    #if STATS
+                        this->insert_start_count++;
+                    #endif
                     return insert_start<false>(key, value, cpu_id);
                 }
             }
@@ -2258,7 +2267,9 @@ private:
                 if (std::get<2>(r)) {
                     // printf("unlocking the main lock in shared mode\n");
                     // mutex.read_unlock();
+                    #if STATS
                     this->insert_start_count++;
+                    #endif
                     return insert_start<false>(key, value, cpu_id);
                 }
             }
@@ -2348,7 +2359,10 @@ private:
               if (lock_p) {
                 if (inner->level == 1 && std::get<2>(r) && !inner->is_full()) {
                   if (lock_p->try_upgrade_release_on_fail(cpu_id)) {
-                    this->insert_descend_count++;
+                    #if STATS
+                        this->insert_descend_count++;
+                    #endif
+
                     r = insert_descend<false>(inner->childid[slot], key, value,
                                               &newkey, &newchild, &lock_p,
                                               cpu_id);

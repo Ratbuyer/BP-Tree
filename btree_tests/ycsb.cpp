@@ -13,6 +13,8 @@
 #include<thread>
 #include <functional>
 
+#include "tools.hpp"
+
 static long get_usecs() {
   struct timeval st;
   gettimeofday(&st, NULL);
@@ -192,7 +194,7 @@ void ycsb_load_run_randint(int index_type, int wl, int kt, int ap, int num_threa
     std::string init_file;
     std::string txn_file;
 
-    std::string ycsb_dir = "/home/eddy/zipfian";
+    std::string ycsb_dir = "/home/eddy/repo/ycsb";
 
     if (ap == UNIFORM)
     {
@@ -370,16 +372,35 @@ void ycsb_load_run_randint(int index_type, int wl, int kt, int ap, int num_threa
             }
         {
             // Run
-            concurrent_map.clear_counters();
+
+            concurrent_map.clear_stats();
+            constexpr bool latency = true;
+
+            ThreadSafeVector<uint64_t> insert_latencies;
+            ThreadSafeVector<uint64_t> read_latencies;
+            ThreadSafeVector<uint64_t> map_length_latencies;
+            ThreadSafeVector<uint64_t> map_range_latencies;
+
             auto starttime = std::chrono::system_clock::now();
             parallel_for(num_thread, 0, RUN_SIZE, [&](const uint64_t &i) {
                     if (ops[i] == OP_INSERT) {
+                        auto start = std::chrono::high_resolution_clock::now();
                         concurrent_map.insert({keys[i], keys[i]});
+                        auto end = std::chrono::high_resolution_clock::now();
+                        if constexpr(latency) {
+                            insert_latencies.push_back(std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count());
+                        }
                     } else if (ops[i] == OP_READ) {
+                        auto start = std::chrono::high_resolution_clock::now();
                         concurrent_map.value(keys[i]);
+                        auto end = std::chrono::high_resolution_clock::now();
+                        if constexpr(latency) {
+                            read_latencies.push_back(std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count());
+                        }
                     } else if (ops[i] == OP_SCAN) {
                         uint64_t start= keys[i];
 			            uint64_t key_sum = 0, val_sum = 0;
+						auto startt = std::chrono::high_resolution_clock::now();
 #if LEAFDS
                         concurrent_map.map_range_length(keys[i], ranges[i], [&key_sum, &val_sum]([[maybe_unused]] auto key, auto val) {
                             key_sum += key;
@@ -391,8 +412,13 @@ void ycsb_load_run_randint(int index_type, int wl, int kt, int ap, int num_threa
                             val_sum += el.second;
                         });
 #endif
+                        auto end = std::chrono::high_resolution_clock::now();
+                        if constexpr(latency) {
+                            map_length_latencies.push_back(std::chrono::duration_cast<std::chrono::nanoseconds>(end - startt).count());
+                        }
                     } else if (ops[i] == OP_SCAN_END) {
 			            uint64_t key_sum = 0, val_sum = 0;
+						auto start = std::chrono::high_resolution_clock::now();
 #if LEAFDS
                         concurrent_map.map_range(keys[i], range_end[i], [&key_sum, &val_sum]([[maybe_unused]] auto key, auto val) {
                             key_sum += key;
@@ -403,6 +429,11 @@ void ycsb_load_run_randint(int index_type, int wl, int kt, int ap, int num_threa
                             val_sum += el.second;
 #endif
                         });
+                        auto end = std::chrono::high_resolution_clock::now();
+                        if constexpr(latency) {
+                            map_range_latencies.push_back(std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count());
+                        }
+
                     } else if (ops[i] == OP_UPDATE) {
                         std::cout << "NOT SUPPORTED CMD!\n";
                         exit(0);
@@ -411,7 +442,18 @@ void ycsb_load_run_randint(int index_type, int wl, int kt, int ap, int num_threa
             auto duration = std::chrono::duration_cast<std::chrono::microseconds>(
                     std::chrono::system_clock::now() - starttime);
             if(k!=0) run_tpts.push_back((RUN_SIZE * 1.0) / duration.count());
-            printf("\tRun, throughput: %f ,ops/us\n", (RUN_SIZE * 1.0) / duration.count());
+
+            if constexpr(!latency) {
+                printf("\tRun, throughput: %f ,ops/us\n", (RUN_SIZE * 1.0) / duration.count());
+            }
+
+            // latency
+            if constexpr(latency) {
+                insert_latencies.print_percentile(90);
+                read_latencies.print_percentile(90);
+                map_length_latencies.print_percentile(90);
+                map_range_latencies.print_percentile(90);
+            }
         }
         // uint64_t key_sum = 0;
         // uint64_t val_sum = 0;

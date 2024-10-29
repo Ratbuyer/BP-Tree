@@ -44,7 +44,7 @@ CFLAGS += -Rpass=.* -Rpass-missed=.* -Rpass-analysis=.*
 endif
 
 
-all: basic
+all: ycsb
 
 ifeq ($(LEAFDS),1)
 basic: test-leafds.cpp
