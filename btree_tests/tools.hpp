@@ -19,6 +19,9 @@ public:
 
     // Get the maximum element in the vector in a thread-safe manner
     T get_max() const {
+        if (data.empty()) {
+            return std::numeric_limits<T>::min();
+        }
         std::lock_guard<std::mutex> lock(vecMutex);
         if (data.empty()) {
             throw std::runtime_error("Vector is empty");

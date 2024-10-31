@@ -482,10 +482,20 @@ void ycsb_load_run_randint(int index_type, int wl, int kt, int ap, int num_threa
 
             // latency
             #if LATENCY
-                insert_latencies.print_percentile(90);
-                read_latencies.print_percentile(90);
-                map_length_latencies.print_percentile(90);
-                map_range_latencies.print_percentile(90);
+            insert_latencies.print_percentile(50);
+            read_latencies.print_percentile(50);
+            map_length_latencies.print_percentile(50);
+            map_range_latencies.print_percentile(50);
+
+            insert_latencies.print_percentile(90);
+            read_latencies.print_percentile(90);
+            map_length_latencies.print_percentile(90);
+            map_range_latencies.print_percentile(90);
+
+            printf("max insert latency: %lu\n", insert_latencies.get_max());
+            printf("max read latency: %lu\n", read_latencies.get_max());
+            printf("max map length latency: %lu\n", map_length_latencies.get_max());
+            printf("max map range latency: %lu\n", map_range_latencies.get_max());
             #endif
         }
         // uint64_t key_sum = 0;
