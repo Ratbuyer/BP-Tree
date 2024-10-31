@@ -100,15 +100,6 @@ void loadKey(TID tid, Key &key) {
     return ;
 }
 
-void ycsb_load_run_string(int index_type, int wl, int kt, int ap, int num_thread,
-        std::vector<Key *> &init_keys,
-        std::vector<Key *> &keys,
-        std::vector<int> &ranges,
-        std::vector<int> &ops)
-{
-
-}
-
 
 struct ThreadArgs {
     std::function<void(int, int)> func;
@@ -298,7 +289,7 @@ void ycsb_load_run_randint(int index_type, int wl, int kt, int ap, int num_threa
         count++;
     }
 
-    fprintf(stderr, "Loaded %d keys\n", count);
+    fprintf(stderr, "Loaded %ld keys\n", count);
 
     std::ifstream infile_txn(txn_file);
 
@@ -343,7 +334,7 @@ void ycsb_load_run_randint(int index_type, int wl, int kt, int ap, int num_threa
     range_complete.store(0);
     range_incomplete.store(0);
 
-    fprintf(stderr, "Loaded %d more keys\n", count);
+    fprintf(stderr, "Loaded %ld more keys\n", count);
 
     std::this_thread::sleep_for(std::chrono::nanoseconds(3000000000));
 
@@ -354,8 +345,6 @@ void ycsb_load_run_randint(int index_type, int wl, int kt, int ap, int num_threa
         std::vector<double> run_tpts;
 
         for(int k =0; k<6; k++){
-            std::vector<uint64_t> query_results_keys(RUN_SIZE);
-            std::vector<uint64_t> query_results_vals(RUN_SIZE);
             tlx::btree_map<uint64_t, uint64_t, std::less<uint64_t>, tlx::btree_default_traits<uint64_t, uint64_t>,
                             std::allocator<uint64_t>, true> concurrent_map;
             {
@@ -621,23 +610,6 @@ int main(int argc, char **argv) {
         memset(&ops[0], 0x00, RUN_SIZE * sizeof(int));
 
         ycsb_load_run_randint(index_type, wl, kt, ap, num_thread, init_keys, keys,ranges_end, ranges, ops);
-    } else {
-        // std::vector<Key *> init_keys;
-        // std::vector<Key *> keys;
-        // std::vector<int> ranges;
-        // std::vector<int> ops;
-
-        // init_keys.reserve(LOAD_SIZE);
-        // keys.reserve(RUN_SIZE);
-        // ranges.reserve(RUN_SIZE);
-        // ops.reserve(RUN_SIZE);
-
-        // memset(&init_keys[0], 0x00, LOAD_SIZE * sizeof(Key *));
-        // memset(&keys[0], 0x00, RUN_SIZE * sizeof(Key *));
-        // memset(&ranges[0], 0x00, RUN_SIZE * sizeof(int));
-        // memset(&ops[0], 0x00, RUN_SIZE * sizeof(int));
-
-        // ycsb_load_run_string(index_type, wl, kt, ap, num_thread, init_keys, keys, ranges, ops);
     }
 
     return 0;
