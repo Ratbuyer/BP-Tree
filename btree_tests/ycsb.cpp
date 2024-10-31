@@ -194,82 +194,83 @@ void ycsb_load_run_randint(int index_type, int wl, int kt, int ap, int num_threa
     std::string init_file;
     std::string txn_file;
 
-    std::string ycsb_dir = "/home/eddy/repo/ycsb";
+    std::string uniform_dir = "/home/eddy/uniform";
+    std::string zipfian_dir = "/home/eddy/zipfian";
 
     if (ap == UNIFORM)
     {
       if (kt == RANDINT_KEY && wl == WORKLOAD_A)
       {
-        init_file = ycsb_dir + "/loada_unif_int.dat";
-        txn_file = ycsb_dir + "/txnsa_unif_int.dat";
+        init_file = uniform_dir + "/loada_unif_int.dat";
+        txn_file = uniform_dir + "/txnsa_unif_int.dat";
       }
       else if (kt == RANDINT_KEY && wl == WORKLOAD_B)
       {
-        init_file = ycsb_dir + "/loadb_unif_int.dat";
-        txn_file = ycsb_dir + "/txnsb_unif_int.dat";
+        init_file = uniform_dir + "/loadb_unif_int.dat";
+        txn_file = uniform_dir + "/txnsb_unif_int.dat";
       }
       else if (kt == RANDINT_KEY && wl == WORKLOAD_C)
       {
-        init_file = ycsb_dir + "/loadc_unif_int.dat";
-        txn_file = ycsb_dir + "/txnsc_unif_int.dat";
+        init_file = uniform_dir + "/loadc_unif_int.dat";
+        txn_file = uniform_dir + "/txnsc_unif_int.dat";
       }
       else if (kt == RANDINT_KEY && wl == WORKLOAD_D)
       {
-        init_file = ycsb_dir + "/loadd_unif_int.dat";
-        txn_file = ycsb_dir + "/txnsd_unif_int.dat";
+        init_file = uniform_dir + "/loadd_unif_int.dat";
+        txn_file = uniform_dir + "/txnsd_unif_int.dat";
       }
       else if (kt == RANDINT_KEY && wl == WORKLOAD_E)
       {
-        init_file = ycsb_dir + "/loade_unif_int.dat";
-        txn_file = ycsb_dir + "/txnse_unif_int.dat";
+        init_file = uniform_dir + "/loade_unif_int.dat";
+        txn_file = uniform_dir + "/txnse_unif_int.dat";
       }
       else if (kt == RANDINT_KEY && wl == WORKLOAD_X)
       {
-        init_file = ycsb_dir + "/loadx_unif_int.dat";
-        txn_file = ycsb_dir + "/txnsx_unif_int.dat";
+        init_file = uniform_dir + "/loadx_unif_int.dat";
+        txn_file = uniform_dir + "/txnsx_unif_int.dat";
       }
       else if (kt == RANDINT_KEY && wl == WORKLOAD_Y)
       {
-        init_file = ycsb_dir + "/loady_unif_int.dat";
-        txn_file = ycsb_dir + "/txnsy_unif_int.dat";
+        init_file = uniform_dir + "/loady_unif_int.dat";
+        txn_file = uniform_dir + "/txnsy_unif_int.dat";
       }
     }
     else
     {
       if (kt == RANDINT_KEY && wl == WORKLOAD_A)
       {
-        init_file = ycsb_dir + "/loada_unif_int.dat";
-        txn_file = ycsb_dir + "/txnsa_unif_int.dat";
+        init_file = zipfian_dir + "/loada_unif_int.dat";
+        txn_file = zipfian_dir + "/txnsa_unif_int.dat";
       }
       else if (kt == RANDINT_KEY && wl == WORKLOAD_B)
       {
-        init_file = ycsb_dir + "/loadb_unif_int.dat";
-        txn_file = ycsb_dir + "/txnsb_unif_int.dat";
+        init_file = zipfian_dir + "/loadb_unif_int.dat";
+        txn_file = zipfian_dir + "/txnsb_unif_int.dat";
       }
       else if (kt == RANDINT_KEY && wl == WORKLOAD_C)
       {
-        init_file = ycsb_dir + "/loadc_unif_int.dat";
-        txn_file = ycsb_dir + "/txnsc_unif_int.dat";
+        init_file = zipfian_dir + "/loadc_unif_int.dat";
+        txn_file = zipfian_dir + "/txnsc_unif_int.dat";
       }
       else if (kt == RANDINT_KEY && wl == WORKLOAD_D)
       {
-        init_file = ycsb_dir + "/loadd_unif_int.dat";
-        txn_file = ycsb_dir + "/txnsd_unif_int.dat";
+        init_file = zipfian_dir + "/loadd_unif_int.dat";
+        txn_file = zipfian_dir + "/txnsd_unif_int.dat";
       }
       else if (kt == RANDINT_KEY && wl == WORKLOAD_E)
       {
-        init_file = ycsb_dir + "/loade_unif_int.dat";
-        txn_file = ycsb_dir + "/txnse_unif_int.dat";
+        init_file = zipfian_dir + "/loade_unif_int.dat";
+        txn_file = zipfian_dir + "/txnse_unif_int.dat";
       }
       else if (kt == RANDINT_KEY && wl == WORKLOAD_X)
       {
-        init_file = ycsb_dir + "/loadx_unif_int.dat";
-        txn_file = ycsb_dir + "/txnsx_unif_int.dat";
+        init_file = zipfian_dir + "/loadx_unif_int.dat";
+        txn_file = zipfian_dir + "/txnsx_unif_int.dat";
       }
       else if (kt == RANDINT_KEY && wl == WORKLOAD_Y)
       {
-        init_file = ycsb_dir + "/loady_unif_int.dat";
-        txn_file = ycsb_dir + "/txnsy_unif_int.dat";
+        init_file = zipfian_dir + "/loady_unif_int.dat";
+        txn_file = zipfian_dir + "/txnsy_unif_int.dat";
       }
     }
 
