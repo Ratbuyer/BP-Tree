@@ -33,7 +33,7 @@
 
 #define PSUM_HEIGHT_CUTOFF 2
 
-#define STATS 1
+#define STATS 0
 
 namespace tlx {
 
