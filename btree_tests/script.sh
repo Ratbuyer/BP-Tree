@@ -1,6 +1,6 @@
 #!/bin/bash
 
-dataset=("a" "b" "c" "e" "x" "y")
+dataset=("a" "b" "c" "e")
 cores=(32 64)
 
 btree_path=~/BP-Tree/btree_tests/ycsb
@@ -12,7 +12,10 @@ for dataset in "${dataset[@]}"
 do
     for core in "${cores[@]}"
     do
-        echo "Running dataset $dataset with $core cores on bskiplist"
-        numactl -N 1 -m 1 $btree_path btree $dataset randint zipfian $core
+        echo "Running dataset $dataset with $core cores"
+        numactl -N 1 -m 1 $btree_path btree $dataset randint uniform  $core
+        numactl -N 1 -m 1 $btree_path btree $dataset randint zipfian  $core
+        numactl -N 1 -m 1 $bskiplist_path btree $dataset randint uniform $core
+        numactl -N 1 -m 1 $bskiplist_path btree $dataset randint zipfian $core
     done
 done
