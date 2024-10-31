@@ -385,23 +385,25 @@ void ycsb_load_run_randint(int index_type, int wl, int kt, int ap, int num_threa
             auto starttime = std::chrono::system_clock::now();
             parallel_for(num_thread, 0, RUN_SIZE, [&](const uint64_t &i) {
                     if (ops[i] == OP_INSERT) {
-                        auto start = std::chrono::high_resolution_clock::now();
-                        concurrent_map.insert({keys[i], keys[i]});
-                        auto end = std::chrono::high_resolution_clock::now();
                         if constexpr(latency) {
+                            auto start = std::chrono::high_resolution_clock::now();
+                            concurrent_map.insert({keys[i], keys[i]});
+                            auto end = std::chrono::high_resolution_clock::now();
                             insert_latencies.push_back(std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count());
-                        }
+                        }else 
+                            concurrent_map.insert({keys[i], keys[i]});
                     } else if (ops[i] == OP_READ) {
-                        auto start = std::chrono::high_resolution_clock::now();
-                        concurrent_map.value(keys[i]);
-                        auto end = std::chrono::high_resolution_clock::now();
                         if constexpr(latency) {
+                            auto start = std::chrono::high_resolution_clock::now();
+                            concurrent_map.value(keys[i]);
+                            auto end = std::chrono::high_resolution_clock::now();
                             read_latencies.push_back(std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count());
-                        }
+                        } else
+                            concurrent_map.value(keys[i]);
                     } else if (ops[i] == OP_SCAN) {
                         uint64_t start= keys[i];
 			            uint64_t key_sum = 0, val_sum = 0;
-						auto startt = std::chrono::high_resolution_clock::now();
+						if constexpr(latency) {auto startt = std::chrono::high_resolution_clock::now();}
 #if LEAFDS
                         concurrent_map.map_range_length(keys[i], ranges[i], [&key_sum, &val_sum]([[maybe_unused]] auto key, auto val) {
                             key_sum += key;
@@ -413,13 +415,13 @@ void ycsb_load_run_randint(int index_type, int wl, int kt, int ap, int num_threa
                             val_sum += el.second;
                         });
 #endif
-                        auto end = std::chrono::high_resolution_clock::now();
+                        if constexpr(latency) { auto end = std::chrono::high_resolution_clock::now(); }
                         if constexpr(latency) {
                             map_length_latencies.push_back(std::chrono::duration_cast<std::chrono::nanoseconds>(end - startt).count());
                         }
                     } else if (ops[i] == OP_SCAN_END) {
 			            uint64_t key_sum = 0, val_sum = 0;
-						auto start = std::chrono::high_resolution_clock::now();
+						if constexpr(latency) {auto start = std::chrono::high_resolution_clock::now();}
 #if LEAFDS
                         concurrent_map.map_range(keys[i], range_end[i], [&key_sum, &val_sum]([[maybe_unused]] auto key, auto val) {
                             key_sum += key;
@@ -430,7 +432,7 @@ void ycsb_load_run_randint(int index_type, int wl, int kt, int ap, int num_threa
                             val_sum += el.second;
 #endif
                         });
-                        auto end = std::chrono::high_resolution_clock::now();
+                        if constexpr(latency) {auto end = std::chrono::high_resolution_clock::now();}
                         if constexpr(latency) {
                             map_range_latencies.push_back(std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count());
                         }
