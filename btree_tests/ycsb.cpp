@@ -15,6 +15,8 @@
 
 #include "tools.hpp"
 
+#define LATENCY 1
+
 static long get_usecs() {
   struct timeval st;
   gettimeofday(&st, NULL);
@@ -344,6 +346,13 @@ void ycsb_load_run_randint(int index_type, int wl, int kt, int ap, int num_threa
         std::vector<double> load_tpts;
         std::vector<double> run_tpts;
 
+        #if LATENCY
+        ThreadSafeVector<uint64_t> insert_latencies;
+        ThreadSafeVector<uint64_t> read_latencies;
+        ThreadSafeVector<uint64_t> map_length_latencies;
+        ThreadSafeVector<uint64_t> map_range_latencies;
+        #endif
+
         for(int k =0; k<6; k++){
             tlx::btree_map<uint64_t, uint64_t, std::less<uint64_t>, tlx::btree_default_traits<uint64_t, uint64_t>,
                             std::allocator<uint64_t>, true> concurrent_map;
@@ -357,22 +366,16 @@ void ycsb_load_run_randint(int index_type, int wl, int kt, int ap, int num_threa
                 auto duration = end- starttime; //std::chrono::duration_cast<std::chrono::microseconds>(
                         //std::chrono::system_clock::now() - starttime);
                 if(k!=0) load_tpts.push_back(((double)LOAD_SIZE)/duration);
+
+                #if !(LATENCY)
                 printf("\tLoad took %lu us, throughput = %f ops/us\n", duration, ((double)LOAD_SIZE)/duration);
+                #endif
                 //printf("Throughput: load, %f ,ops/us and time %ld in us\n", (LOAD_SIZE * 1.0) / duration.count(), duration.count());
             }
         {
             // Run
 
             concurrent_map.clear_stats();
-
-            #define LATENCY 0
-
-            #if LATENCY
-            ThreadSafeVector<uint64_t> insert_latencies;
-            ThreadSafeVector<uint64_t> read_latencies;
-            ThreadSafeVector<uint64_t> map_length_latencies;
-            ThreadSafeVector<uint64_t> map_range_latencies;
-            #endif
 
             auto starttime = std::chrono::system_clock::now();
 
@@ -478,10 +481,13 @@ void ycsb_load_run_randint(int index_type, int wl, int kt, int ap, int num_threa
 
             if(k!=0) run_tpts.push_back((RUN_SIZE * 1.0) / duration.count());
 
+            #if !(LATENCY)
             printf("\tRun, throughput: %f ,ops/us\n", (RUN_SIZE * 1.0) / duration.count());
+            #endif
 
-            // latency
-            #if LATENCY
+        }
+        }
+        #if LATENCY
             insert_latencies.print_percentile(50);
             read_latencies.print_percentile(50);
             map_length_latencies.print_percentile(50);
@@ -496,18 +502,10 @@ void ycsb_load_run_randint(int index_type, int wl, int kt, int ap, int num_threa
             printf("max read latency: %lu\n", read_latencies.get_max());
             printf("max map length latency: %lu\n", map_length_latencies.get_max());
             printf("max map range latency: %lu\n", map_range_latencies.get_max());
-            #endif
-        }
-        // uint64_t key_sum = 0;
-        // uint64_t val_sum = 0;
-        // for(uint64_t i = 0; i < RUN_SIZE; i++) {
-        //     key_sum += query_results_keys[i];
-        //     val_sum += query_results_vals[i];
-        // }
-        // printf("\ttotal key sum = %lu, total val sum = %lu\n\n", key_sum, val_sum);
-        }
-        printf("\tMedian Load throughput: %f ,ops/us\n", findMedian(load_tpts));
-        printf("\tMedian Run throughput: %f ,ops/us\n", findMedian(run_tpts));
+        #else
+	        printf("\tMedian Load throughput: %f ,ops/us\n", findMedian(load_tpts));
+	        printf("\tMedian Run throughput: %f ,ops/us\n", findMedian(run_tpts));
+		#endif
     }
 }
 
