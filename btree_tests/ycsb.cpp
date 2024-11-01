@@ -506,6 +506,8 @@ void ycsb_load_run_randint(int index_type, int wl, int kt, int ap, int num_threa
 	        printf("\tMedian Load throughput: %f ,ops/us\n", findMedian(load_tpts));
 	        printf("\tMedian Run throughput: %f ,ops/us\n", findMedian(run_tpts));
 		#endif
+
+		printf("\n\n");
     }
 }
 
