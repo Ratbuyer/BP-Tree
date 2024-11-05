@@ -465,7 +465,7 @@ void ycsb_load_run_randint(int index_type, int wl, int kt, int ap,
 						std::cout << "NOT SUPPORTED CMD!\n";
 						exit(0);
 					}
-					}
+
 			});
 
 #endif
