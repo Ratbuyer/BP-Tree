@@ -309,10 +309,7 @@ void ycsb_load_run_randint(int index_type, int wl, int kt, int ap,
 		std::vector<double> run_tpts;
 
 #if LATENCY
-		ThreadSafeVector<uint64_t> insert_latencies;
-		ThreadSafeVector<uint64_t> read_latencies;
-		ThreadSafeVector<uint64_t> map_length_latencies;
-		ThreadSafeVector<uint64_t> map_range_latencies;
+		ThreadSafeVector<uint64_t> latencies;
 #endif
 
 		for (int k = 0; k < 6; k++) {
@@ -350,27 +347,86 @@ void ycsb_load_run_randint(int index_type, int wl, int kt, int ap,
 				auto starttime = std::chrono::system_clock::now();
 
 #if LATENCY
-				parallel_for(num_thread, 0, RUN_SIZE, [&](const uint64_t &i) {
+				constexpr int batch_size = 10;
+
+				parallel_for(
+					num_thread, 0, RUN_SIZE / batch_size,
+					[&](const uint64_t &i) {
+						auto start = std::chrono::system_clock::now();
+
+						for (int j = 0; j < batch_size; j++) {
+
+							const int index = i * batch_size + j;
+
+							if (ops[index] == OP_INSERT) {
+								concurrent_map.insert(
+									{keys[index], keys[index]});
+							} else if (ops[index] == OP_READ) {
+								concurrent_map.value(keys[index]);
+							} else if (ops[index] == OP_SCAN) {
+								uint64_t start = keys[index];
+								uint64_t key_sum = 0, val_sum = 0;
+#if LEAFDS
+								concurrent_map.map_range_length(
+									keys[index], ranges[index],
+									[&key_sum, &val_sum](
+										[[maybe_unused]] auto key, auto val) {
+										key_sum += key;
+										val_sum += val;
+									});
+#else
+								concurrent_map.map_range_length(
+									keys[index], ranges[index],
+									[&key_sum,
+									 &val_sum]([[maybe_unused]] auto el) {
+										key_sum += el.first;
+										val_sum += el.second;
+									});
+#endif
+							}
+
+							else if (ops[index] == OP_SCAN_END) {
+								uint64_t key_sum = 0, val_sum = 0;
+#if LEAFDS
+								concurrent_map.map_range(
+									keys[index], range_end[index],
+									[&key_sum, &val_sum](
+										[[maybe_unused]] auto key, auto val) {
+										key_sum += key;
+										val_sum += val;
+#else
+								concurrent_map.map_range(
+									keys[index], range_end[index],
+									[&key_sum,
+									 &val_sum]([[maybe_unused]] auto el) {
+										key_sum += el.first;
+										val_sum += el.second;
+#endif
+									});
+							} else if (ops[index] == OP_UPDATE) {
+								std::cout << "NOT SUPPORTED CMD!\n";
+								exit(0);
+							}
+						}
+
+						auto end = std::chrono::high_resolution_clock::now();
+
+						latencies.push_back(
+							std::chrono::duration_cast<
+								std::chrono::nanoseconds>(end - start)
+								.count());
+					});
+
+#else
+
+					parallel_for(num_thread, 0, RUN_SIZE, [&](const uint64_t &i) {
 					if (ops[i] == OP_INSERT) {
-						auto start = std::chrono::high_resolution_clock::now();
 						concurrent_map.insert({keys[i], keys[i]});
-						auto end = std::chrono::high_resolution_clock::now();
-						insert_latencies.push_back(
-							std::chrono::duration_cast<
-								std::chrono::nanoseconds>(end - start)
-								.count());
 					} else if (ops[i] == OP_READ) {
-						auto start = std::chrono::high_resolution_clock::now();
 						concurrent_map.value(keys[i]);
-						auto end = std::chrono::high_resolution_clock::now();
-						read_latencies.push_back(
-							std::chrono::duration_cast<
-								std::chrono::nanoseconds>(end - start)
-								.count());
 					} else if (ops[i] == OP_SCAN) {
 						uint64_t start = keys[i];
 						uint64_t key_sum = 0, val_sum = 0;
-						auto startt = std::chrono::high_resolution_clock::now();
 #if LEAFDS
 						concurrent_map.map_range_length(
 							keys[i], ranges[i],
@@ -380,69 +436,12 @@ void ycsb_load_run_randint(int index_type, int wl, int kt, int ap,
 								val_sum += val;
 							});
 #else
-                            concurrent_map.map_range_length(keys[i], ranges[i], [&key_sum, &val_sum]([[maybe_unused]] auto el) {
-                                key_sum += el.first;
-                                val_sum += el.second;
-                            });
-#endif
-						auto end = std::chrono::high_resolution_clock::now();
-						map_length_latencies.push_back(
-							std::chrono::duration_cast<
-								std::chrono::nanoseconds>(end - startt)
-								.count());
-					}
-
-					else if (ops[i] == OP_SCAN_END) {
-						uint64_t key_sum = 0, val_sum = 0;
-						auto start = std::chrono::high_resolution_clock::now();
-#if LEAFDS
-						concurrent_map.map_range(
-							keys[i], range_end[i],
-							[&key_sum, &val_sum]([[maybe_unused]] auto key,
-												 auto val) {
-								key_sum += key;
-								val_sum += val;
-#else
-                        concurrent_map.map_range(keys[i], range_end[i], [&key_sum, &val_sum]([[maybe_unused]] auto el) {
-                            key_sum += el.first;
-                            val_sum += el.second;
-#endif
-							});
-						auto end = std::chrono::high_resolution_clock::now();
-						map_range_latencies.push_back(
-							std::chrono::duration_cast<
-								std::chrono::nanoseconds>(end - start)
-								.count());
-
-					} else if (ops[i] == OP_UPDATE) {
-						std::cout << "NOT SUPPORTED CMD!\n";
-						exit(0);
-					}
-				});
-
-#else
-
-				parallel_for(num_thread, 0, RUN_SIZE, [&](const uint64_t &i) {
-					if (ops[i] == OP_INSERT) {
-						concurrent_map.insert({keys[i], keys[i]});
-					} else if (ops[i] == OP_READ) {
-						concurrent_map.value(keys[i]);
-					} else if (ops[i] == OP_SCAN) {
-						uint64_t start = keys[i];
-						uint64_t key_sum = 0, val_sum = 0;
-#if LEAFDS
 						concurrent_map.map_range_length(
 							keys[i], ranges[i],
-							[&key_sum, &val_sum]([[maybe_unused]] auto key,
-												 auto val) {
-								key_sum += key;
-								val_sum += val;
+							[&key_sum, &val_sum]([[maybe_unused]] auto el) {
+								key_sum += el.first;
+								val_sum += el.second;
 							});
-#else
-                            concurrent_map.map_range_length(keys[i], ranges[i], [&key_sum, &val_sum]([[maybe_unused]] auto el) {
-                                key_sum += el.first;
-                                val_sum += el.second;
-                            });
 #endif
 					} else if (ops[i] == OP_SCAN_END) {
 						uint64_t key_sum = 0, val_sum = 0;
@@ -454,9 +453,11 @@ void ycsb_load_run_randint(int index_type, int wl, int kt, int ap,
 								key_sum += key;
 								val_sum += val;
 #else
-                        concurrent_map.map_range(keys[i], range_end[i], [&key_sum, &val_sum]([[maybe_unused]] auto el) {
-                            key_sum += el.first;
-                            val_sum += el.second;
+						concurrent_map.map_range(
+							keys[i], range_end[i],
+							[&key_sum, &val_sum]([[maybe_unused]] auto el) {
+								key_sum += el.first;
+								val_sum += el.second;
 #endif
 							});
 
@@ -464,7 +465,8 @@ void ycsb_load_run_randint(int index_type, int wl, int kt, int ap,
 						std::cout << "NOT SUPPORTED CMD!\n";
 						exit(0);
 					}
-				});
+					}
+			});
 
 #endif
 
@@ -482,25 +484,16 @@ void ycsb_load_run_randint(int index_type, int wl, int kt, int ap,
 			}
 		}
 #if LATENCY
-		insert_latencies.print_percentile(50);
-		read_latencies.print_percentile(50);
-		map_length_latencies.print_percentile(50);
-		map_range_latencies.print_percentile(50);
+		latencies.print_percentile(50);
+		latencies.print_percentile(90);
+		latencies.print_percentile(99);
+		latencies.print_percentile(99.99);
 
-		insert_latencies.print_percentile(90);
-		read_latencies.print_percentile(90);
-		map_length_latencies.print_percentile(90);
-		map_range_latencies.print_percentile(90);
-
-		printf("max insert latency: %lu\n", insert_latencies.get_max());
-		printf("max read latency: %lu\n", read_latencies.get_max());
-		printf("max map length latency: %lu\n", map_length_latencies.get_max());
-		printf("max map range latency: %lu\n", map_range_latencies.get_max());
-#else
-		printf("\tMedian Load throughput: %f ,ops/us\n", findMedian(load_tpts));
-		printf("\tMedian Run throughput: %f ,ops/us\n", findMedian(run_tpts));
+		printf("max insert latency: %lu\n", latencies.get_max());
 #endif
 
+		printf("\tMedian Load throughput: %f ,ops/us\n", findMedian(load_tpts));
+		printf("\tMedian Run throughput: %f ,ops/us\n", findMedian(run_tpts));
 		printf("\n\n");
 	}
 }
