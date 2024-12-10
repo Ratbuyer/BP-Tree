@@ -8,6 +8,8 @@ SANITIZE?=0
 CORRECTNESS?=0
 LEAFDS?=0
 AVX512?=0
+LATENCY?=0
+STATS?=0
 
 ifeq ($(LEAFDS),1)
 CFLAGS := -pthread -Wall -Wextra -O$(OPT) -g  -std=c++20 -IParallelTools/ -I../tlx-leafds -fmax-errors=1
@@ -41,6 +43,14 @@ ifeq ($(INFO), 1)
 # CFLAGS +=  -Rpass-missed="(inline|loop*)"
 #CFLAGS += -Rpass="(inline|loop*)" -Rpass-missed="(inline|loop*)" -Rpass-analysis="(inline|loop*)"
 CFLAGS += -Rpass=.* -Rpass-missed=.* -Rpass-analysis=.*
+endif
+
+ifeq ($(LATENCY), 1)
+CFLAGS += -DLATENCY=1
+endif
+
+ifeq ($(STATS), 1)
+DEFINES += -DSTATS=1
 endif
 
 
