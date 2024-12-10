@@ -28,6 +28,17 @@ public:
         }
         return *std::max_element(data.begin(), data.end());
     }
+    
+    void print_max() const {
+		if (data.empty()) {
+			return;
+		}
+		std::lock_guard<std::mutex> lock(vecMutex);
+		if (data.empty()) {
+			return;
+		}
+		std::cout << "Max: " << *std::max_element(data.begin(), data.end()) << std::endl;
+	}
 
     // Get the percentile element in a thread-safe manner
     T get_percentile(double percentile) const {
