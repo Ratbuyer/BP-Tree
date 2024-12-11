@@ -82,4 +82,26 @@ public:
         std::lock_guard<std::mutex> lock(vecMutex);
         return data.size();
     }
+    
+    
+    // Save the contents of the vector in increasing order to a CSV file
+    void save_to_csv(const std::string& filename) const {
+        std::lock_guard<std::mutex> lock(vecMutex);
+
+        // Make a copy of the data and sort it
+        std::vector<T> sortedData = data;
+        std::sort(sortedData.begin(), sortedData.end());
+
+        // Write to the CSV file
+        std::ofstream file(filename);
+        if (!file.is_open()) {
+            throw std::runtime_error("Failed to open file: " + filename);
+        }
+
+        for (const auto& value : sortedData) {
+            file << value << "\n";
+        }
+
+        file.close();
+    }
 };

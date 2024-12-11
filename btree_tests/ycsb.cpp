@@ -429,6 +429,8 @@ void ycsb_load_run_randint(std::string init_file, std::string txn_file,
 	latencies.print_percentile(99);
 	latencies.print_percentile(99.99);
 	latencies.print_max();
+	
+	// latencies.save_to_csv("latency.csv");
 #endif
 
 	printf("\tMedian Load throughput: %f ,ops/us\n", findMedian(load_tpts));
