@@ -352,7 +352,8 @@ void ycsb_load_run_randint(std::string init_file, std::string txn_file,
 					}
 
 					auto end = std::chrono::high_resolution_clock::now();
-
+					
+					if (k == 2)
 					latencies.push_back(
 						std::chrono::duration_cast<std::chrono::nanoseconds>(
 							end - start)
