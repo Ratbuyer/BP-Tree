@@ -172,7 +172,8 @@ void ycsb_load_run_randint(std::string init_file, std::string txn_file,
 						   int num_thread, std::vector<uint64_t> &init_keys,
 						   std::vector<uint64_t> &keys,
 						   std::vector<uint64_t> &range_end,
-						   std::vector<int> &ranges, std::vector<int> &ops) {
+						   std::vector<int> &ranges, std::vector<int> &ops,
+                           std::string output) {
 
 	std::ifstream infile_load(init_file);
 
@@ -430,7 +431,7 @@ void ycsb_load_run_randint(std::string init_file, std::string txn_file,
 	latencies.print_percentile(99.99);
 	latencies.print_max();
 	
-	// latencies.save_to_csv("latency.csv");
+	latencies.save_to_csv(output);
 #endif
 
 	printf("\tMedian Load throughput: %f ,ops/us\n", findMedian(load_tpts));
@@ -439,7 +440,7 @@ void ycsb_load_run_randint(std::string init_file, std::string txn_file,
 }
 
 int main(int argc, char **argv) {
-	if (argc != 4) {
+	if (argc != 5) {
 		std::cout << "Usage: ./ycsb [index type] [ycsb workload type] [key "
 					 "distribution] [access pattern] [number of threads]\n";
 		std::cout << "1. index type: art hot bwtree masstree clht\n";
@@ -484,6 +485,7 @@ int main(int argc, char **argv) {
 	}
 
 	int num_thread = atoi(argv[3]);
+	string output = argv[4];
 
 	std::vector<uint64_t> init_keys;
 	std::vector<uint64_t> keys;
@@ -504,7 +506,7 @@ int main(int argc, char **argv) {
 	memset(&ops[0], 0x00, RUN_SIZE * sizeof(int));
 
 	ycsb_load_run_randint(load_file, index_file, num_thread, init_keys, keys,
-							 ranges_end, ranges, ops);
+							 ranges_end, ranges, ops, output);
 
 	return 0;
 }

@@ -1,21 +1,9 @@
-#!/bin/bash
-
-dataset=("a" "b" "c" "e")
-cores=(32 64)
-
-btree_path=~/BP-Tree/btree_tests/ycsb
-bskiplist_path=~/bskiplist/ycsb
-
-# numactl -N 1 -m 1 BP-Tree/btree_tests/ycsb btree a randint zipfian 32
-
-for dataset in "${dataset[@]}"
-do
-    for core in "${cores[@]}"
-    do
-        echo "Running dataset $dataset with $core cores"
-        numactl -N 1 -m 1 $btree_path btree $dataset randint uniform  $core
-        numactl -N 1 -m 1 $btree_path btree $dataset randint zipfian  $core
-        numactl -N 1 -m 1 $bskiplist_path btree $dataset randint uniform $core
-        numactl -N 1 -m 1 $bskiplist_path btree $dataset randint zipfian $core
-    done
-done
+numactl -N 1 -m 1 ./ycsb /home/eddy/datasets/uniform/ c 64 insert_0.csv
+numactl -N 1 -m 1 ./ycsb /home/eddy/datasets/uniform/custom/uniform/insert_01/ a 64 insert_01.csv
+numactl -N 1 -m 1 ./ycsb /home/eddy/datasets/uniform/uniform/insert_1/ a 64 insert_1.csv
+numactl -N 1 -m 1 ./ycsb /home/eddy/datasets/uniform/uniform/insert_5/ a 64 insert_5.csv
+numactl -N 1 -m 1 ./ycsb /home/eddy/datasets/uniform/uniform/insert_10/ a 64 insert_10.csv
+numactl -N 1 -m 1 ./ycsb /home/eddy/datasets/uniform/uniform/insert_25/ a 64 insert_25.csv
+numactl -N 1 -m 1 ./ycsb /home/eddy/datasets/uniform/ a 64 insert_50.csv
+numactl -N 1 -m 1 ./ycsb /home/eddy/datasets/uniform/uniform/insert_75/ a 64 insert_75.csv
+numactl -N 1 -m 1 ./ycsb /home/eddy/datasets/uniform/uniform/insert_100/ a 64 insert_100.csv
