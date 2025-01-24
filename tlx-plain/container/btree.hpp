@@ -241,12 +241,14 @@ public:
     #if STATS
     std::atomic<int> insert_start_count = 0;
     std::atomic<int> insert_descend_count = 0;
+    std::atomic<int> write_lock_counts = 0;
     #endif
 
     void clear_stats() {
         #if STATS
         this->insert_start_count = 0;
         this->insert_descend_count = 0;
+        this->write_lock_counts = 0;
         #endif
     }
 
@@ -1210,6 +1212,7 @@ public:
         int insert_descend = this->insert_descend_count.load();
         printf("insert_start_count: %d\n", insert_start_stat);
         printf("insert_descend_count: %d\n", insert_descend);
+        printf("write_lock_counts: %d\n", this->write_lock_counts.load());
         #endif
         clear();
     }
@@ -2232,7 +2235,10 @@ private:
                 // printf("locked the main lock in shared mode\n");
             } else {
                 // printf("trying to lock the main lock in exclusive mode\n");
+                #if STATS
+                this->write_lock_counts++;
                 mutex.write_lock();
+                #endif
                 // printf("locked the main lock in exclusive mode\n");
             }
         }
@@ -2333,7 +2339,10 @@ private:
                     // printf("locked a inner node lock %p in shared mode\n", inner);
                 } else {
                     // printf("trying to lock a inner node lock %p in exclusive mode\n", inner);
+                    #if STATS
+                    this->write_lock_counts++;
                     inner->mutex_.write_lock();
+                    #endif
                     // if (inner->slotuse < inner_slotmax-1) {
                     //     (*parent_lock)->write_unlock();
                     //     *parent_lock = nullptr;
@@ -2469,7 +2478,10 @@ private:
             LeafNode* original_leaf = leaf;
             if constexpr (concurrent) {
                 // printf("trying to lock leaf lock from %p\n", leaf);
+                #if STATS
+                this->write_lock_counts++;
                 leaf->mutex_.write_lock();
+                #endif
                 if constexpr (optimism) {
                     if (!leaf->is_full()) {
                         (*parent_lock)->read_unlock(cpu_id);
@@ -2839,7 +2851,10 @@ public:
                 }
                 mutex.read_lock(cpu_id);
             } else {
+           		#if STATS
+            	this->write_lock_counts++;
                 mutex.write_lock();
+                #endif
             }
         }
 
@@ -2948,7 +2963,10 @@ int cpu_id) {
         {
             LeafNode* leaf = static_cast<LeafNode*>(curr);
             if constexpr (concurrent) {
+           		#if STATS
+             	this->write_lock_counts++;
                 leaf->mutex_.write_lock();
+                #endif
                 // if constexpr (optimism) {
                 //     (*parent_lock)->read_unlock(cpu_id);
                 //     *parent_lock = nullptr;
@@ -3107,7 +3125,10 @@ int cpu_id) {
                     (*parent_lock)->read_unlock(cpu_id);
                     *parent_lock = nullptr;
                 } else {
+                	#if STATS
+                 	this->write_lock_counts++;
                     inner->mutex_.write_lock();
+                    #endif
                 }
             }
             InnerNode* left_inner = static_cast<InnerNode*>(left);
@@ -3771,7 +3792,7 @@ int cpu_id) {
     //! Balance two leaf nodes. The function moves key/data pairs from right to
     //! left so that both nodes are equally filled. The parent node is updated
     //! if possible.
-    static result_t shift_left_leaf(
+    result_t shift_left_leaf(
         LeafNode* left, LeafNode* right,
         InnerNode* parent, unsigned int parentslot) {
 
@@ -3796,7 +3817,10 @@ int cpu_id) {
         // node.
 
         if (concurrent) {
+       		#if STATS
+        	this->write_lock_counts++;
             right->mutex_.write_lock();
+            #endif
         }
 
         std::copy(right->slotdata, right->slotdata + shiftnum,
