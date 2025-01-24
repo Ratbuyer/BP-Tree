@@ -241,7 +241,8 @@ public:
     #if STATS
     std::atomic<int> insert_start_count = 0;
     std::atomic<int> insert_descend_count = 0;
-    std::atomic<int> write_lock_counts = 0;
+    mutable std::atomic<int> write_lock_counts = 0;
+    mutable std::atomic<int> read_lock_counts = 0;
     #endif
 
     void clear_stats() {
@@ -249,6 +250,7 @@ public:
         this->insert_start_count = 0;
         this->insert_descend_count = 0;
         this->write_lock_counts = 0;
+        this->read_lock_counts = 0;
         #endif
     }
 
@@ -1213,6 +1215,7 @@ public:
         printf("insert_start_count: %d\n", insert_start_stat);
         printf("insert_descend_count: %d\n", insert_descend);
         printf("write_lock_counts: %d\n", this->write_lock_counts.load());
+        printf("read_lock_counts: %d\n", this->read_lock_counts.load());
         #endif
         clear();
     }
@@ -1601,6 +1604,9 @@ public:
         ReaderWriterLock *parent_lock = nullptr;
         if constexpr(concurrent) {
             cpuid = sched_getcpu();
+            #if STATS
+            this->read_lock_counts++;
+            #endif
             mutex.read_lock(cpuid);
             parent_lock = &mutex;
         }
@@ -1616,6 +1622,9 @@ public:
         {
             const InnerNode* inner = static_cast<const InnerNode*>(n);
             if constexpr(concurrent) {
+            #if STATS
+            this->read_lock_counts++;
+            #endif
                 inner->mutex_.read_lock(cpuid);
                 parent_lock->read_unlock(cpuid);
                 parent_lock = &(inner->mutex_);
@@ -1627,6 +1636,9 @@ public:
 
         const LeafNode* leaf = static_cast<const LeafNode*>(n);
         if constexpr(concurrent) {
+        #if STATS
+        this->read_lock_counts++;
+        #endif
             leaf->mutex_.read_lock(cpuid);
             parent_lock->read_unlock(cpuid);
         }
@@ -1648,6 +1660,9 @@ public:
         int cpuid = 0;
         ReaderWriterLock *parent_lock = nullptr;
         if constexpr(concurrent) {
+        #if STATS
+        this->read_lock_counts++;
+        #endif
             cpuid = sched_getcpu();
             mutex.read_lock(cpuid);
             parent_lock = &mutex;
@@ -1664,6 +1679,9 @@ public:
         {
             const InnerNode* inner = static_cast<const InnerNode*>(n);
             if constexpr(concurrent) {
+            #if STATS
+            this->read_lock_counts++;
+            #endif
                 inner->mutex_.read_lock(cpuid);
                 parent_lock->read_unlock(cpuid);
                 parent_lock = &(inner->mutex_);
@@ -1676,6 +1694,9 @@ public:
         const LeafNode* old_leaf;
 
         if constexpr(concurrent) {
+        #if STATS
+        this->read_lock_counts++;
+        #endif
             leaf->mutex_.read_lock(cpuid);
             parent_lock->read_unlock(cpuid);
         }
@@ -1697,6 +1718,9 @@ public:
                 old_leaf = leaf;
                 leaf = static_cast<const LeafNode*>(leaf->next_leaf);
                 if constexpr (concurrent) {
+                #if STATS
+                this->read_lock_counts++;
+                #endif
                     leaf->mutex_.read_lock(cpuid);
                     old_leaf->mutex_.read_unlock(cpuid);
                 }
@@ -1721,6 +1745,9 @@ public:
         int cpuid = 0;
         ReaderWriterLock *parent_lock = nullptr;
         if constexpr(concurrent) {
+        #if STATS
+        this->read_lock_counts++;
+        #endif
             cpuid = sched_getcpu();
             mutex.read_lock(cpuid);
             parent_lock = &mutex;
@@ -1737,6 +1764,9 @@ public:
         {
             const InnerNode* inner = static_cast<const InnerNode*>(n);
             if constexpr(concurrent) {
+            #if STATS
+            this->read_lock_counts++;
+            #endif
                 inner->mutex_.read_lock(cpuid);
                 parent_lock->read_unlock(cpuid);
                 parent_lock = &(inner->mutex_);
@@ -1749,6 +1779,9 @@ public:
         const LeafNode* old_leaf;
 
         if constexpr(concurrent) {
+        #if STATS
+        this->read_lock_counts++;
+        #endif
             leaf->mutex_.read_lock(cpuid);
             parent_lock->read_unlock(cpuid);
         }
@@ -1773,6 +1806,9 @@ public:
                 old_leaf = leaf;
                 leaf = static_cast<const LeafNode*>(leaf->next_leaf);
                 if constexpr (concurrent) {
+                #if STATS
+                this->read_lock_counts++;
+                #endif
                     leaf->mutex_.read_lock(cpuid);
                     old_leaf->mutex_.read_unlock(cpuid);
                 }
@@ -1793,6 +1829,9 @@ public:
       ReaderWriterLock *parent_lock = nullptr;
       if constexpr (concurrent) {
         cpuid = sched_getcpu();
+        #if STATS
+        this->read_lock_counts++;
+        #endif
         mutex.read_lock(cpuid);
         parent_lock = &mutex;
       }
@@ -1806,6 +1845,9 @@ public:
       while (!n->is_leafnode()) {
         const InnerNode *inner = static_cast<const InnerNode *>(n);
         if constexpr (concurrent) {
+        #if STATS
+        this->read_lock_counts++;
+        #endif
           inner->mutex_.read_lock(cpuid);
           parent_lock->read_unlock(cpuid);
           parent_lock = &(inner->mutex_);
@@ -1815,6 +1857,9 @@ public:
       }
       const LeafNode *leaf = static_cast<const LeafNode *>(n);
       if constexpr (concurrent) {
+      #if STATS
+      this->read_lock_counts++;
+      #endif
         leaf->mutex_.read_lock(cpuid);
         parent_lock->read_unlock(cpuid);
       }
@@ -2231,6 +2276,9 @@ private:
                     cpu_id = sched_getcpu();
                 }
                 // printf("trying to lock the main lock in shared mode\n");
+                #if STATS
+                this->read_lock_counts++;
+                #endif
                 mutex.read_lock(cpu_id);
                 // printf("locked the main lock in shared mode\n");
             } else {
@@ -2333,6 +2381,9 @@ private:
             if constexpr (concurrent) {
                 if constexpr (optimism) {
                     // printf("trying to lock a inner node lock %p in shared mode\n", inner);
+                    #if STATS
+                    this->read_lock_counts++;
+                    #endif
                     inner->mutex_.read_lock(cpu_id);
                     (*parent_lock)->read_unlock(cpu_id);
                     *parent_lock = nullptr;
@@ -2849,6 +2900,9 @@ public:
                 if (cpu_id == -1) {
                     cpu_id = sched_getcpu();
                 }
+                #if STATS
+                this->read_lock_counts++;
+                #endif
                 mutex.read_lock(cpu_id);
             } else {
            		#if STATS
@@ -3121,6 +3175,9 @@ int cpu_id) {
             InnerNode* inner = static_cast<InnerNode*>(curr);
             if constexpr (concurrent) {
                 if constexpr (optimism) {
+   	            #if STATS
+                this->read_lock_counts++;
+                #endif
                     inner->mutex_.read_lock(cpu_id);
                     (*parent_lock)->read_unlock(cpu_id);
                     *parent_lock = nullptr;
