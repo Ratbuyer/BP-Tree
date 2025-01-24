@@ -353,11 +353,11 @@ void ycsb_load_run_randint(std::string init_file, std::string txn_file,
 
 					auto end = std::chrono::high_resolution_clock::now();
 					
-					if (k == 2)
+					if (k == 3)
 					latencies.push_back(
 						std::chrono::duration_cast<std::chrono::nanoseconds>(
 							end - start)
-							.count());
+							.count() / batch_size);
 				});
 
 #else
@@ -419,10 +419,10 @@ void ycsb_load_run_randint(std::string init_file, std::string txn_file,
 			if (k != 0)
 				run_tpts.push_back((RUN_SIZE * 1.0) / duration.count());
 
-#if !(LATENCY)
+
 			printf("\tRun, throughput: %f ,ops/us\n",
 				   (RUN_SIZE * 1.0) / duration.count());
-#endif
+
 		}
 	}
 #if LATENCY
