@@ -429,6 +429,7 @@ void ycsb_load_run_randint(std::string init_file, std::string txn_file,
 	latencies.print_percentile(50);
 	latencies.print_percentile(90);
 	latencies.print_percentile(99);
+	latencies.print_percentile(99.9);
 	latencies.print_percentile(99.99);
 	latencies.print_max();
 	

@@ -243,6 +243,7 @@ public:
     std::atomic<int> insert_descend_count = 0;
     mutable std::atomic<int> write_lock_counts = 0;
     mutable std::atomic<int> read_lock_counts = 0;
+    mutable std::atomic<int> root_lock_counts = 0;
     #endif
 
     void clear_stats() {
@@ -251,6 +252,7 @@ public:
         this->insert_descend_count = 0;
         this->write_lock_counts = 0;
         this->read_lock_counts = 0;
+        this->root_lock_counts = 0;
         #endif
     }
 
@@ -1216,6 +1218,7 @@ public:
         printf("insert_descend_count: %d\n", insert_descend);
         printf("write_lock_counts: %d\n", this->write_lock_counts.load());
         printf("read_lock_counts: %d\n", this->read_lock_counts.load());
+        printf("root_lock_counts: %d\n", this->root_lock_counts.load());
         #endif
         clear();
     }
@@ -2285,6 +2288,7 @@ private:
                 // printf("trying to lock the main lock in exclusive mode\n");
                 #if STATS
                 this->write_lock_counts++;
+                this->root_lock_counts++;
                 #endif
                 mutex.write_lock();
                 // printf("locked the main lock in exclusive mode\n");
