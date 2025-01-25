@@ -244,6 +244,7 @@ public:
     mutable std::atomic<int> write_lock_counts = 0;
     mutable std::atomic<int> read_lock_counts = 0;
     mutable std::atomic<int> root_lock_counts = 0;
+    mutable std::atomic<int> range_length_node_counters = 0;
     #endif
 
     void clear_stats() {
@@ -253,6 +254,7 @@ public:
         this->write_lock_counts = 0;
         this->read_lock_counts = 0;
         this->root_lock_counts = 0;
+        this->range_length_node_counters = 0;
         #endif
     }
 
@@ -1219,6 +1221,7 @@ public:
         printf("write_lock_counts: %d\n", this->write_lock_counts.load());
         printf("read_lock_counts: %d\n", this->read_lock_counts.load());
         printf("root_lock_counts: %d\n", this->root_lock_counts.load());
+        printf("range_length_node_counters: %d\n", this->range_length_node_counters.load());
         #endif
         clear();
     }
@@ -1804,6 +1807,10 @@ public:
                 std::apply(f, std::forward_as_tuple(leaf->slotdata[i]));
                 count++;
             }
+            
+            #if STATS
+            this->range_length_node_counters++;
+            #endif
 
             if (count < length && i >= leaf->slotuse && leaf->next_leaf != nullptr) {
                 old_leaf = leaf;
