@@ -254,6 +254,8 @@ void ycsb_load_run_randint(std::string init_file, std::string txn_file,
 	std::vector<double> run_tpts;
 
 #if LATENCY
+	constexpr int batch_size = 10;
+	ThreadSafeVector<uint64_t> load_latencies;
 	ThreadSafeVector<uint64_t> latencies;
 #endif
 
@@ -263,11 +265,26 @@ void ycsb_load_run_randint(std::string init_file, std::string txn_file,
 					   std::allocator<uint64_t>, true>
 			concurrent_map;
 		{
-			// Load
-			auto starttime = get_usecs(); // std::chrono::system_clock::now();
+			auto starttime = get_usecs();
+			
+			#if LATENCY
+			parallel_for(num_thread, 0, LOAD_SIZE / batch_size, [&](const uint64_t &i) {
+				auto load_start = std::chrono::high_resolution_clock::now();
+				for (int j = 0; j < batch_size; j++) {
+					concurrent_map.insert({init_keys[i * 10 + j], init_keys[i * 10 + j]});
+				}
+				auto load_end = std::chrono::high_resolution_clock::now();
+				if (k == 3) load_latencies.push_back(
+					std::chrono::duration_cast<std::chrono::nanoseconds>(load_end - load_start)
+						.count() /
+					batch_size);
+			});
+			#else
 			parallel_for(num_thread, 0, LOAD_SIZE, [&](const uint64_t &i) {
 				concurrent_map.insert({init_keys[i], init_keys[i]});
 			});
+			#endif
+			
 			auto end = get_usecs();
 			auto duration =
 				end -
@@ -276,10 +293,8 @@ void ycsb_load_run_randint(std::string init_file, std::string txn_file,
 			if (k != 0)
 				load_tpts.push_back(((double)LOAD_SIZE) / duration);
 
-#if !(LATENCY)
 			printf("\tLoad took %lu us, throughput = %f ops/us\n", duration,
 				   ((double)LOAD_SIZE) / duration);
-#endif
 			// printf("Throughput: load, %f ,ops/us and time %ld in us\n",
 			// (LOAD_SIZE * 1.0) / duration.count(), duration.count());
 		}
@@ -291,8 +306,6 @@ void ycsb_load_run_randint(std::string init_file, std::string txn_file,
 			auto starttime = std::chrono::system_clock::now();
 
 #if LATENCY
-			constexpr int batch_size = 10;
-
 			parallel_for(
 				num_thread, 0, RUN_SIZE / batch_size, [&](const uint64_t &i) {
 					auto start = std::chrono::system_clock::now();
@@ -426,14 +439,10 @@ void ycsb_load_run_randint(std::string init_file, std::string txn_file,
 		}
 	}
 #if LATENCY
-	latencies.print_percentile(50);
-	latencies.print_percentile(90);
-	latencies.print_percentile(99);
-	latencies.print_percentile(99.9);
-	latencies.print_percentile(99.99);
-	latencies.print_max();
+	load_latencies.print_percentiles();
+	latencies.print_percentiles();
 	
-	latencies.save_to_csv(output);
+	// latencies.save_to_csv(output);
 #endif
 
 	printf("\tMedian Load throughput: %f ,ops/us\n", findMedian(load_tpts));
